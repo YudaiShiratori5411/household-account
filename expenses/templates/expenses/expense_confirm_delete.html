@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h2 class="mb-0">支出の削除</h2>
+                </div>
+                <div class="card-body">
+                    <p>以下の支出を削除してもよろしいですか？</p>
+                    <dl class="row">
+                        <dt class="col-sm-3">日付</dt>
+                        <dd class="col-sm-9">{{ object.date }}</dd>
+                        <dt class="col-sm-3">カテゴリ</dt>
+                        <dd class="col-sm-9">{{ object.category }}</dd>
+                        <dt class="col-sm-3">金額</dt>
+                        <dd class="col-sm-9">{{ object.amount }}円</dd>
+                        <dt class="col-sm-3">内容</dt>
+                        <dd class="col-sm-9">{{ object.description }}</dd>
+                    </dl>
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-danger">削除</button>
+                            <a href="{% url 'expense-list' %}" class="btn btn-secondary">戻る</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
