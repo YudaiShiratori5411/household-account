@@ -2,7 +2,10 @@
 
 {% block content %}
 <h1>家計簿</h1>
-<a href="{% url 'expense-create' %}" class="btn btn-primary mb-3">新規登録</a>
+<div class="mb-3">
+    <a href="{% url 'expense-create' %}" class="btn btn-primary">新規登録</a>
+    <a href="{% url 'expense-analytics' %}" class="btn btn-info">支出分析</a>
+</div>
 
 <table class="table">
     <thead>

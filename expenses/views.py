@@ -3,6 +3,12 @@ from django.urls import reverse_lazy
 from django.contrib import messages
 from .models import Expense
 from .forms import ExpenseForm
+from django.db.models import Sum
+from django.db.models.functions import TruncMonth
+from django.utils import timezone
+from datetime import datetime, timedelta
+
+import json
 
 class ExpenseListView(ListView):
     model = Expense
@@ -42,3 +48,35 @@ class ExpenseDeleteView(DeleteView):
     def delete(self, request, *args, **kwargs):
         messages.success(self.request, '支出を削除しました')
         return super().delete(request, *args, **kwargs)
+
+class ExpenseAnalyticsView(ListView):
+    model = Expense
+    template_name = 'expenses/expense_analytics.html'
+    context_object_name = 'expenses'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # 月別の支出合計
+        monthly_expenses = (
+            Expense.objects.annotate(month=TruncMonth('date'))
+            .values('month')
+            .annotate(total=Sum('amount'))
+            .order_by('month')
+        )
+
+        # カテゴリ別の支出合計
+        category_expenses = (
+            Expense.objects.values('category')
+            .annotate(total=Sum('amount'))
+            .order_by('-total')
+        )
+
+        # グラフ用のデータを準備（JSON形式に変換）
+        context.update({
+            'monthly_labels': json.dumps([item['month'].strftime('%Y年%m月') for item in monthly_expenses]),
+            'monthly_data': json.dumps([float(item['total']) for item in monthly_expenses]),
+            'category_labels': json.dumps([item['category'] for item in category_expenses]),
+            'category_data': json.dumps([float(item['total']) for item in category_expenses])
+        })
+        return context

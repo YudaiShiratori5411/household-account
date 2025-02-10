@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">支出分析</h1>
+    
+    <div class="row">
+        <!-- 月別支出グラフ -->
+        <div class="col-md-8 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    月別支出推移
+                </div>
+                <div class="card-body">
+                    <canvas id="monthlyChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- カテゴリ別支出グラフ -->
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    カテゴリ別支出割合
+                </div>
+                <div class="card-body">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- データをJavaScriptの変数として定義 -->
+<script>
+    // JSON文字列をJavaScriptオブジェクトに変換
+    const monthlyLabels = JSON.parse('{{ monthly_labels|safe }}');
+    const monthlyData = JSON.parse('{{ monthly_data|safe }}');
+    const categoryLabels = JSON.parse('{{ category_labels|safe }}');
+    const categoryData = JSON.parse('{{ category_data|safe }}');
+    
+    // デバッグ用
+    console.log('Monthly Labels:', monthlyLabels);
+    console.log('Monthly Data:', monthlyData);
+    console.log('Category Labels:', categoryLabels);
+    console.log('Category Data:', categoryData);
+</script>
+
+<!-- グラフを描画するスクリプト -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 月別支出グラフ
+    const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
+    new Chart(monthlyCtx, {
+        type: 'line',
+        data: {
+            labels: monthlyLabels,
+            datasets: [{
+                label: '月別支出',
+                data: monthlyData,
+                borderColor: 'rgb(75, 192, 192)',
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return value.toLocaleString() + '円';
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // カテゴリ別支出グラフ
+    const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+    new Chart(categoryCtx, {
+        type: 'doughnut',
+        data: {
+            labels: categoryLabels,
+            datasets: [{
+                data: categoryData,
+                backgroundColor: [
+                    'rgb(255, 99, 132)',
+                    'rgb(54, 162, 235)',
+                    'rgb(255, 206, 86)',
+                    'rgb(75, 192, 192)',
+                    'rgb(153, 102, 255)',
+                    'rgb(255, 159, 64)'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}
