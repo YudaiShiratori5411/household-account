@@ -7,8 +7,11 @@ from django.db.models import Sum
 from django.db.models.functions import TruncMonth
 from django.utils import timezone
 from datetime import datetime, timedelta
+from .analytics import ExpensePrediction
 
 import json
+import pandas as pd
+
 
 class ExpenseListView(ListView):
     model = Expense
@@ -79,4 +82,19 @@ class ExpenseAnalyticsView(ListView):
             'category_labels': json.dumps([item['category'] for item in category_expenses]),
             'category_data': json.dumps([float(item['total']) for item in category_expenses])
         })
+
+        # 予測
+        predictor = ExpensePrediction()
+        df = predictor.prepare_data()
+
+        if len(df) >= 3:  # 最低3ヶ月のデータがある場合のみ予測を行う
+            predictor.train_model(df)
+            prediction_data = predictor.get_prediction_with_confidence(df)
+            context['prediction'] = prediction_data
+
+            # 予測用の月を追加
+            last_month = df['month'].iloc[-1]
+            next_month = last_month + pd.DateOffset(months=1)
+            prediction_month = next_month.strftime('%Y年%m月')
+            context['prediction_month'] = prediction_month
         return context

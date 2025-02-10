@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load humanize %}
 
 {% block content %}
 <div class="container mt-4">
@@ -31,6 +32,38 @@
         </div>
     </div>
 </div>
+
+{% if prediction %}
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">来月の支出予測</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="alert alert-info">
+                            <h6>{{ prediction_month }}の予測支出</h6>
+                            <h3>¥{{ prediction.prediction|intcomma }}</h3>
+                            <small class="text-muted">
+                                予測範囲: ¥{{ prediction.min_prediction|intcomma }} 〜 ¥{{ prediction.max_prediction|intcomma }}
+                            </small>
+                        </div>
+                    </div>
+                    <div class="col-md-8">
+                        <p>この予測は過去の支出パターンに基づいています。</p>
+                        <ul>
+                            <li>中央値: ¥{{ prediction.prediction|intcomma }}</li>
+                            <li>予測の信頼区間: ¥{{ prediction.min_prediction|intcomma }} 〜 ¥{{ prediction.max_prediction|intcomma }}</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
 
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
