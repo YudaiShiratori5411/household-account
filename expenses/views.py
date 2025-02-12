@@ -1,6 +1,7 @@
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView
 from django.urls import reverse_lazy
 from django.contrib import messages
+from django.db.models import Q
 from .models import Expense
 from .forms import ExpenseForm
 from django.db.models import Sum
@@ -8,6 +9,7 @@ from django.db.models.functions import TruncMonth
 from django.utils import timezone
 from datetime import datetime, timedelta
 from .analytics import ExpensePrediction
+from .analytics import ExpenseStatistics
 
 import json
 import pandas as pd
@@ -59,10 +61,17 @@ class ExpenseAnalyticsView(ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        
+
+        # 期間を指定（デフォルトは過去6ヶ月）
+        end_date = timezone.now()
+        start_date = end_date - timedelta(days=180)
+
+        # すべての支出データを取得
+        expenses = Expense.objects.all().order_by('date')
+
         # 月別の支出合計
         monthly_expenses = (
-            Expense.objects.annotate(month=TruncMonth('date'))
+            expenses.annotate(month=TruncMonth('date'))
             .values('month')
             .annotate(total=Sum('amount'))
             .order_by('month')
@@ -70,7 +79,7 @@ class ExpenseAnalyticsView(ListView):
 
         # カテゴリ別の支出合計
         category_expenses = (
-            Expense.objects.values('category')
+            expenses.values('category')
             .annotate(total=Sum('amount'))
             .order_by('-total')
         )
@@ -97,4 +106,14 @@ class ExpenseAnalyticsView(ListView):
             next_month = last_month + pd.DateOffset(months=1)
             prediction_month = next_month.strftime('%Y年%m月')
             context['prediction_month'] = prediction_month
+
+        # 統計分析を実行
+        stats = ExpenseStatistics(expenses)
+        context.update({
+            'basic_stats': stats.get_basic_stats(),
+            'category_analysis': stats.get_category_analysis(),
+            'time_analysis': stats.get_time_analysis(),
+            'trend_analysis': stats.get_trend_analysis(),
+        })
+
         return context
